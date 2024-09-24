@@ -18,9 +18,27 @@
         {{ end }}
       </select> 
       <br>
-      <button hx-post="/presenca"
+      <button hx-post="/marcar-presenca"
               hx-trigger="click"
               hx-target="#admatividade"
+              hx-swap="innerHTML"
+              hx-vals='{"Uuid": "{{ .Uuid }}"}'>
+        Enviar
+      </button>
+    </form>
+		<div id="admpresenca"></div>
+    <form>
+      <label for="Atividade">Qual atividade para desmarcar presença</label>
+      <br>
+      <select name="Atividade" id="atividade">
+        {{ range .Attendance }}
+        <option value="{{ .Activity_id }}">{{ .Topic }}</option>
+        {{ end }}
+      </select> 
+      <br>
+      <button hx-post="/desmarcar-presenca"
+              hx-trigger="click"
+              hx-target="#admpresenca"
               hx-swap="innerHTML"
               hx-vals='{"Uuid": "{{ .Uuid }}"}'>
         Enviar

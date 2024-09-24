@@ -327,6 +327,39 @@ func MarkUserAttendance(uuid string, activityID int) error {
 	return nil
 }
 
+func UnmarkUserAttendance(uuid string, activityID int) error {
+	tx, err := DB.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	query := `
+  UPDATE registrations
+  SET has_attended = FALSE
+  WHERE user_id = $1 AND activity_id = $2
+  `
+
+	result, err := tx.Exec(query, uuid, activityID)
+	if err != nil {
+		return fmt.Errorf("failed to update attendance status: %v", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %v", err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("Usuário não está cadastrado nesta atividade")
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
+	}
+
+	return nil
+}
+
 func GetUserAttendedActivities(uuid string) ([]Activity, error) {
 	query := `
   SELECT a.id, a.spots, a.activity_type, a.room, a.speaker, a.topic, a.description, a.time, a.day, a.time_stamp, a.image

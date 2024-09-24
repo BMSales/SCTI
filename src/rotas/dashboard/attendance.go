@@ -13,6 +13,7 @@ import (
 
 type AttendanceData struct {
 	Activities []DB.Activity
+	Attendance []DB.Activity
 	Uuid       string
 }
 
@@ -55,6 +56,7 @@ func GetAttendance(w http.ResponseWriter, r *http.Request) {
 
 	data := AttendanceData{
 		Activities: userActivities,
+		Attendance: attendedActivities,
 		Uuid:       uuid,
 	}
 
@@ -66,7 +68,7 @@ func GetAttendance(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "attendance", data)
 }
 
-func PostAttendance(w http.ResponseWriter, r *http.Request) {
+func MarkAttendance(w http.ResponseWriter, r *http.Request) {
 	if !CheckAdmin(w, r) {
 		Erros.HttpError(w, "dashboard/attendance", fmt.Errorf("Endpoint exclusiva de Admins"))
 		HTMX.Failure(w, "Acesso proibido", fmt.Errorf("Não foi encontrado ou não é valido o cookie de admin"))
@@ -89,6 +91,31 @@ func PostAttendance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	HTMX.Success(w, "Presença do usuário marcada com sucesso")
+}
+
+func UnmarkAttendance(w http.ResponseWriter, r *http.Request) {
+	if !CheckAdmin(w, r) {
+		Erros.HttpError(w, "dashboard/attendance", fmt.Errorf("Endpoint exclusiva de Admins"))
+		HTMX.Failure(w, "Acesso proibido", fmt.Errorf("Não foi encontrado ou não é valido o cookie de admin"))
+		return
+	}
+
+	uuid := r.FormValue("Uuid")
+	atividade := r.FormValue("Atividade")
+
+	id, err := strconv.Atoi(atividade)
+	if err != nil {
+		HTMX.Failure(w, "Falha ao resgatar atividade: ", err)
+		return
+	}
+
+	err = DB.UnmarkUserAttendance(uuid, id)
+	if err != nil {
+		HTMX.Failure(w, "Falha ao desmarcar presença do usuário: ", err)
+		return
+	}
+
+	HTMX.Success(w, "Presença do usuário desmarcada com sucesso")
 }
 
 func RemoveAttendedActivities(registeredActivities []DB.Activity, attendedActivities []DB.Activity) []DB.Activity {
